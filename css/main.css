@@ -1,0 +1,37 @@
+*{
+    box-sizing: border-box;
+}
+
+body{
+  text-align: center;
+  background-color: rgba(146, 145, 145, 0.795);
+}
+
+h1{
+    font-weight: bold;
+}
+
+.subtext{
+    font-size: large;
+    font-weight: bold;
+}
+
+table{
+    background-color: rgba(78, 78, 78, 0.412);
+    border: 5px solid rgb(39, 39, 39);
+    padding: 30px;
+    margin: auto;
+}
+
+td{
+    border: 3px solid rgb(39, 39, 39);
+    background-color: rgb(165, 163, 163);
+    padding: 30px;
+    margin: auto;
+    width: 20px;
+    height: 20px;
+}
+
+.hidden{
+    color: rgb(165, 163, 163);
+}
