@@ -11,13 +11,19 @@
 
 <body onload="init()">
     <h1>Minesweeper</h1>
-    <div class="subtext">Mines Left: 2</div>
+    <div class="subtext"><span class="mines">Mines Left: 2</span><span class="lives">Lives Left: 3</span></div>
+
+
     <div class="timer-count">
         <span id="second">00</span>:<span id="millisecond">000</span>
     </div>
     <div class="main-box"></div>
 
-
+    <div class="btns">
+        <button class="easy" onclick="clickBtn(this)">Easy</button>
+        <button class="hard" onclick="clickBtn(this)">Hard</button>
+        <button class="extreme" onclick="clickBtn(this)">Extreme</button>
+    </div>
 
 
     <script src="js/util.js"></script>
