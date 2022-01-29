@@ -303,6 +303,10 @@ function revealMinesOnBoard() {
         for (var j = 0; j < gBoard.length; j++) {
             if (gBoard[i][j].isMine) {
                 revealCell(i, j);
+                var mineAudio = new Audio('assets/sounds/mine-boom.mp3');
+                var catAudio = new Audio('assets/sounds/cat.mp3');
+                mineAudio.play()
+                setTimeout(catAudio.play(), 1000);
             }
         }
     }
