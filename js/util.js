@@ -36,7 +36,6 @@ function countNegsAround(cellI, cellJ, mat) {
             var currCell = mat[i][j]
             if (currCell.isMine) {
                 count++
-                console.log(count);
             }
         }
     }

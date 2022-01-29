@@ -13,10 +13,12 @@ h1{
 }
 
 .subtext{
+    border: 2px solid rgb(78, 78, 78);
     font-size: large;
     font-weight: bold;
     margin-left: 50%;
     margin-top: 20px;
+    margin-bottom: 5px;
 }
 
 .lives{
@@ -104,4 +106,12 @@ td{
     padding: 20px;
     margin: 20px;
     box-shadow: 2px 2px rgb(10, 12, 12);
+}
+
+.score{
+    border: 2px solid rgb(78, 78, 78);
+    font-size: large;
+    font-weight: bold;
+    margin-left: 50%;
+    margin-top: 20px;
 }

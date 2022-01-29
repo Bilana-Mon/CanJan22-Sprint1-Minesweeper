@@ -4,11 +4,30 @@
 const MINE = '💣';
 const FLAG = '🚩';
 
+
+var gGameMods = {
+    easy: {
+        SIZE: 4,
+        MINES: 2,
+        LIVES: 2
+    },
+    hard: {
+        SIZE: 8,
+        MINES: 12,
+        LIVES: 3
+    },
+    extreme: {
+        SIZE: 12,
+        MINES: 30,
+        LIVES: 3
+    }
+};
+
+var gCurrMode = 'easy';
 var gMadeFirstMove = false;
-var gLives;
+var gLives = gGameMods[gCurrMode];
+var gMinesLeft = gGameMods[gCurrMode];
 var gInterval;
-var gSeconds;
-var gMilliseconds;
 var gBoard;
 var gGame = {
     isOn: false,
@@ -16,16 +35,30 @@ var gGame = {
     markedCount: 0,
     secsPassed: 0
 };
-var gLevel = {
-    SIZE: 4,
-    MINES: 2
-};
-var gMinesLeft = 2;
-var gMine = {
-    i: getRandomIntInclusive(0, gLevel.SIZE - 1),
-    j: getRandomIntInclusive(0, gLevel.SIZE - 1)
+
+// get best score from local storage
+function getBestScoreFromLocalStorage() {
+    var localStorageKey = `${gCurrMode}_bestScore`;
+    return window.localStorage.getItem(localStorageKey);
+
 }
 
+function setBestScoreInLocalStorage() {
+    console.log('setting');
+    var localStorageKey = `${gCurrMode}_bestScore`;
+    window.localStorage.setItem(localStorageKey, gGame.secsPassed);
+}
+
+function handleBestScore() {
+    var bestScore = getBestScoreFromLocalStorage();
+    console.log(bestScore);
+    if (!bestScore) {
+        setBestScoreInLocalStorage(gGame.secsPassed);
+    }
+    if (bestScore && gGame.secsPassed < parseInt(bestScore)) {
+        setBestScoreInLocalStorage(gGame.secsPassed);
+    }
+}
 
 function init() {
     document.querySelector('h1').innerText = 'Minesweeper 😀';
@@ -33,7 +66,7 @@ function init() {
         reset();
         init();
     }
-
+    setBestScoreInView();
     gBoard = buildBoard();
     gBoard = setMinesOnBoard(gBoard);
     gBoard = setMinesNegsCount(gBoard);
@@ -43,15 +76,14 @@ function init() {
     gGame.shownCount = 0;
     gGame.markedCount = 0;
     gLives = 2;
-    gSeconds = 0;
-    gMilliseconds = 0;
-
+    gGame.secsPassed = 0;
+    reset();
 }
 
 // create matrix board
 function buildBoard() {
     var cell = {};
-    var board = createMat(gLevel.SIZE, gLevel.SIZE);
+    var board = createMat(gGameMods[gCurrMode].SIZE, gGameMods[gCurrMode].SIZE);
     for (var i = 0; i < board.length; i++) {
         for (var j = 0; j < board.length; j++) {
             cell = {
@@ -71,12 +103,12 @@ function buildBoard() {
 // random mines func
 function setMinesOnBoard(board) {
     var mines = [];
-    for (var i = 0; i < gLevel.MINES; i++) {
-        var rowMine = getRandomIntInclusive(0, gLevel.SIZE - 1);
-        var colMine = getRandomIntInclusive(0, gLevel.SIZE - 1);
+    for (var i = 0; i < gGameMods[gCurrMode].MINES; i++) {
+        var rowMine = getRandomIntInclusive(0, gGameMods[gCurrMode].SIZE - 1);
+        var colMine = getRandomIntInclusive(0, gGameMods[gCurrMode].SIZE - 1);
         while (mines.includes({ i: rowMine, j: colMine })) {
-            rowMine = getRandomIntInclusive(0, gLevel.SIZE - 1);
-            colMine = getRandomIntInclusive(0, gLevel.SIZE - 1);
+            rowMine = getRandomIntInclusive(0, gGameMods[gCurrMode].SIZE - 1);
+            colMine = getRandomIntInclusive(0, gGameMods[gCurrMode].SIZE - 1);
         }
         mines.push({ i: rowMine, j: colMine });
 
@@ -206,10 +238,11 @@ function gameVictory(i, j) {
                 (!gBoard[i][j].isMine && gBoard[i][j].isShown) ||
                 (gBoard[i][j].isMine && gBoard[i][j].isMarked)) {
                 gGame.isOn = false;
-                document.querySelector('h1').innerText = 'Victory 😎!';
             }
         }
     }
+    document.querySelector('h1').innerText = 'Victory 😎!';
+    handleBestScore();
 }
 
 
@@ -242,8 +275,9 @@ function getNegsInDegree(degree, cellI, cellJ) {
 
 
 function setRandMine(cellI, cellJ) {
-    for (var i = 0; i < gBoard.length; i++) {
-        for (var j = 0; j < gBoard.length; j++) {
+    console.log('rand');
+    for (var i = 0; i < gGameMods[gCurrMode].SIZE; i++) {
+        for (var j = 0; j < gGameMods[gCurrMode].SIZE; j++) {
             if (!gBoard[i][j].isMine && i !== cellI && j !== cellJ) {
                 gBoard[i][j].isMine = true;
                 return;
@@ -254,16 +288,26 @@ function setRandMine(cellI, cellJ) {
 
 
 function expandShown(i, j) {
+    var elCell = document.getElementById(`${i}_${j}`);
     if (!gMadeFirstMove) {
         gMadeFirstMove = true;
-        gBoard[i][j].isMine = false;
-        setRandMine()
-        renderBoard(gBoard)
-        start()
+        if (gBoard[i][j].isMine) {
+            gBoard[i][j].isMine = false;
+            setRandMine(i, j);
+            console.log('elCell', elCell);
+            elCell.innerText = countNegsAround(i, j, gBoard).toString();
+            console.log(countNegsAround(i, j, gBoard));
+        }
+
+        revealCell(i, j);
+        renderBoard(gBoard);
+        start();
     }
     if (gBoard[i][j].isMine) {
-        setLivesCount(gLives--);
-        setMinesCount(gMinesLeft--)
+        gLives = gLives - 1;
+        gMinesLeft = gMinesLeft - 1;
+        setLivesCount(gLives);
+        setMinesCount(gMinesLeft)
     }
     gameLost(i, j);
     if (checkGameOver(i, j)) {
@@ -287,15 +331,20 @@ function expandShown(i, j) {
 }
 
 
+function setBestScoreInView() {
+    var elBestSpan = document.querySelector('.score');
+    elBestSpan.innerText = `Best Score: ${getBestScoreFromLocalStorage() || 0}`;
+}
+
 // updates the lives the player has left
 function setLivesCount(lives) {
     var elSpan = document.querySelector('.lives');
     elSpan.innerText = `Lives Left: ${lives}`;
 }
 
-function setMinesCount(mines) {
+function setMinesCount() {
     var elSpan = document.querySelector('.mines');
-    elSpan.innerText = `Mines Left: ${mines}`;
+    elSpan.innerText = `Mines Left: ${gMinesLeft}`;
 }
 
 function revealMinesOnBoard() {
@@ -312,18 +361,33 @@ function revealMinesOnBoard() {
     }
 }
 
+// resets the stats
 
+function resetStats() {
+    console.log(gGameMods[gCurrMode]);
+    gLives = gGameMods[gCurrMode].LIVES;
+    gMinesLeft = gGameMods[gCurrMode].MINES;
+    setLivesCount(gLives);
+    setMinesCount(gMinesLeft);
 
+}
 
+// resets the board
 function resetView() {
     document.querySelector('h1').innerText = 'Minesweeper 😀';
-    gSeconds = 0;
-    gMilliseconds = 0;
-
+    gGame.secsPassed = 0;
     gMadeFirstMove = false;
 
-    document.getElementById('second').innerText = returnData(gSeconds);
-    document.getElementById('millisecond').innerText = returnData(gMilliseconds);
+    gBoard = buildBoard();
+    gBoard = setMinesOnBoard(gBoard);
+    gBoard = setMinesNegsCount(gBoard);
+    renderBoard(gBoard);
+
+    document.getElementById('second').innerText = returnData(gGame.secsPassed);
+
+    document.getElementById('second').innerText = '00';
+    setBestScoreInView();
+
 
 }
 
@@ -334,44 +398,14 @@ function resetView() {
 
 function clickBtn(btn) {
     if (btn.classList.contains('easy')) {
-        gLevel.SIZE = 4;
-        gLevel.MINES = 2;
-        gMinesLeft = 2;
-        gLives = 2;
-        document.querySelector('.mines').innerText = 'Mines Left: 2';
-        document.querySelector('.lives').innerText = 'Lives Left: 3';
-        gBoard = buildBoard();
-        gBoard = setMinesOnBoard(gBoard);
-        gBoard = setMinesNegsCount(gBoard);
-        renderBoard(gBoard);
-
+        gCurrMode = 'easy';
         // TODO: add timer reset funcs
     } else if (btn.classList.contains('hard')) {
-        gLevel.SIZE = 8;
-        gLevel.MINES = 12;
-        gMinesLeft = 12;
-        gLives = 3;
-        document.querySelector('.mines').innerText = 'Mines Left: 12';
-        document.querySelector('.lives').innerText = 'Lives Left: 3';
-        gBoard = buildBoard();
-        gBoard = setMinesOnBoard(gBoard);
-        gBoard = setMinesNegsCount(gBoard);
-        renderBoard(gBoard);
-
+        gCurrMode = 'hard';
     } else {
-        gLevel.SIZE = 12;
-        gLevel.MINES = 30;
-        gMinesLeft = 30;
-        gLives = 3;
-        document.querySelector('.mines').innerText = 'Mines Left: 30';
-        document.querySelector('.lives').innerText = 'Lives Left: 3';
-        gBoard = buildBoard();
-        gBoard = setMinesOnBoard(gBoard);
-        gBoard = setMinesNegsCount(gBoard);
-        renderBoard(gBoard);
-
+        gCurrMode = 'extreme';
     }
-    resetView()
+    reset();
 
 }
 
@@ -381,16 +415,17 @@ function clickBtn(btn) {
 // timer functions
 
 function start() {
-    gInterval = setInterval(timer, 10);
+    gInterval = setInterval(timer, 1000);
 }
 
 // pause game
 function pause() {
     var elCells = document.querySelectorAll('td');
     for (var i = 0; i < elCells.length; i++) {
-        elCells[i].onclick = null;
-        elCells[i].oncontextmenu = null;
+        elCells[i].style.pointerEvents = 'none';
     }
+
+
 }
 
 function pauseTimer() {
@@ -398,34 +433,22 @@ function pauseTimer() {
 }
 
 function reset() {
-    gSeconds = 0;
-    gMilliseconds = 0;
+    gGame.secsPassed = 0;
     gMadeFirstMove = false;
-    setLivesCount(gLives);
-    setMinesCount(gMinesLeft);
+
     document.getElementById('second').innerText = '00';
-    document.getElementById('millisecond').innerText = '000';
-    for (var i = 0; i < gBoard.length; i++) {
-        for (var j = 0; j < gBoard.length; j++) {
-            var elCell = document.getElementById(`${i}_${j}`);
-            elCell.onclick = function () {
-                return expandShown(i, j);
-            }
-            elCell.oncontextmenu = function () {
-                return cellMarked(i, j);
-            }
-        }
-    }
+
+    resetView();
+    resetStats();
+
 }
 
 
 function timer() {
-    if ((gMilliseconds += 10) === 1000) {
-        gMilliseconds = 0;
-        gSeconds++;
-    }
-    document.getElementById('second').innerText = returnData(gSeconds);
-    document.getElementById('millisecond').innerText = returnData(gMilliseconds);
+
+    gGame.secsPassed++;
+
+    document.getElementById('second').innerText = returnData(gGame.secsPassed);
 }
 
 
